@@ -30,7 +30,7 @@ def process_chunk(proc_id, f, threads_count, task_queue, result_queue):
     # print('end proc id', proc_id, ' cpu core=', psutil.Process().cpu_num())
 
 
-def fast_map(f, *v, procs_limit=None, threads_limit=None, ordered=True):
+def fast_map(f, *v, threads_limit=None, ordered=True, forced_procs_count=None):
     ''' Only ordered mode is available now. '''
     def enqueuer(queues, values, none_count):
         for i, val in enumerate(zip(*values)):
@@ -38,9 +38,12 @@ def fast_map(f, *v, procs_limit=None, threads_limit=None, ordered=True):
             queues[i % len(queues)].put((i,val))
         for q in queues:
             q.put((None,None))
-    procs_count = mp.cpu_count()
-    if procs_limit:
-        procs_count = min(procs_limit, procs_count)
+
+    procs_count = mp.cpu_count() * 2
+    if len(v[0]) < procs_count:
+        procs_count = len(v[0])
+    if forced_procs_count:
+        procs_count = forced_procs_count
 
     # chunk to be processed by a single process
     chunk_size = math.ceil(len(v[0]) / procs_count)
