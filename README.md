@@ -49,7 +49,7 @@ I compared it against using muliprocessing/multithreading on their own. [test\_f
   
 Python3.7  
 Ubuntu 18.04.6  
-Intel i5-3320M   
+Intel i5-3320M (4 cores)  
 8GB DDR3 memory
 
 Results show that for IO+CPU expensive tasks fast\_map performs better than multithreading-only and multiprocessing-only approaches. For strictly CPU expensive tasks it performs better than multithreading-only but slightly worse than multiprocessing-only approach.  
