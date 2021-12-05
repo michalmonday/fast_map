@@ -47,7 +47,7 @@ Intel i5-3320M
 #### Comparison when using 10\*\*5 loops within the blocking function.
 "-1" means that ProcessPoolExecutor failed due to "too many files open".  
 
-![comparison image didn't show](https://github.com/michalmonday/fast_map/tree/master/images/comparison.png)  
+![comparison image didn't show](https://github.com/michalmonday/fast_map/tree/master/images/comparison.png?raw=true)  
 
 
 #### Comparison when using 10\*\*6 loops within the blocking function.  
