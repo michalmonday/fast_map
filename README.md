@@ -97,7 +97,7 @@ Accessing thread-safe objects (created externally, and using locks under the hoo
 
 By default the fast\_map `threads_limit` parameter is `None`, meaning that a separate thread is spawned for **each** of supplied tasks (attempting to provide full concurrency). It is strongly encouraged to set threads\_limit to some reasonable value for 2 reasons:  
 * large number of threads will slow down the CPU-expensive part of the blocking function  
-* fast\_map will result in unhandled exception when too many threads try to be created   
+* fast\_map will result in unhandled exception when too many threads try to be created (on my system it's around few thousands)   
 
 (btw if threads\_limit is higher than the number of supplied tasks, then the number of created threads equals the number of supplied tasks, so threads\_limit doesn't force the number of created threads, it only limits them)  
 
