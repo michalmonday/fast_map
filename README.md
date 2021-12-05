@@ -52,6 +52,10 @@ Ubuntu 18.04.6
 Intel i5-3320M   
 8GB DDR3 memory
 
+Results show that for IO+CPU expensive tasks fast\_map performs better than multithreading-only and multiprocessing-only approaches. For strictly CPU expensive tasks it performs better than multithreading-only but slightly worse than multiprocessing-only approach.  
+
+In both cases, IO+CPU and striclty CPU expensive tasks, it performs better than the standard map.  
+
 #### IO and CPU expensive task
 Standard map is not shown because it would take minutes (as it executes tasks sequentially).  
 
@@ -73,6 +77,8 @@ def io_and_cpu_expensive_blocking_function(x):
 ```
 
 #### Strictly CPU expensive task
+
+It can be noticed that using larger number of threads tends to result faster results even in CPU expensive tasks, however I would risk a statement that using such large number of threads (e.g. 1 per each task) for a stricly CPU expensive tasks may bring negligible speed improvement of the fast\_map but may possibly slow down the whole system.  
 
 ![error - image didn't show](https://github.com/michalmonday/fast_map/blob/master/images/cpu_only.png?raw=true)  
 
