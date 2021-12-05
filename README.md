@@ -9,7 +9,7 @@
 
 ## Introduction
 **What is a map?**  
-[map](https://www.w3schools.com/python/ref_func_map.asp) is a python function which allows to repetitively execute the same function witout the need to use loops. It executes each task sequentially, meaning that it doesn't start executing a new task before completing the previous one.  
+[map](https://www.w3schools.com/python/ref_func_map.asp) is a python function which allows to repetitively execute the same function without the need to use loops. It executes each task sequentially, meaning that it doesn't start executing a new task before completing the previous one.  
 
 This library allows to execute multiple tasks in parallel using multiple processor cores, and multiple threads to maximise performance even when function is blocking (e.g. it's delayed by `time.sleep()`).  
 
@@ -17,9 +17,9 @@ This library allows to execute multiple tasks in parallel using multiple process
 * provides parallelism and concurrency for blocking functions    
 * returns a [generator](https://stackoverflow.com/a/70233705/4620679) (meaning that individual returned values are returned immediately after being computed, before the whole collection is returned as a whole)  
 * return is ordered (accordingly to supplied arguments)  
-* uses the number of processes equal to CPU cores   
-* uses the number of threads equal to the number of supplied tasks (unless threads\_limit argument is provided)  
 * evenly distributes tasks within processes  
+* uses the number of threads equal to the number of supplied tasks (unless threads\_limit argument is provided)  
+* uses the number of processes equal to 2\*CPU cores (which for some reason worked better during my tests than using the exact CPU cores number) unless the number of tasks is smaller than it  
 
 
 ## Usage
@@ -54,14 +54,14 @@ Intel i5-3320M
 
 Results show that for IO+CPU expensive tasks fast\_map performs better than multithreading-only and multiprocessing-only approaches. For strictly CPU expensive tasks it performs better than multithreading-only but slightly worse than multiprocessing-only approach.  
 
-In both cases, IO+CPU and striclty CPU expensive tasks, it performs better than the standard map.  
+In both cases, IO+CPU and strictly CPU expensive tasks, it performs better than the standard map.  
 
 #### IO and CPU expensive task
 Standard map is not shown because it would take minutes (as it executes tasks sequentially).  
 
 "-1" result means that ProcessPoolExecutor failed due to "too many files open" (which on my system happens when around 1000 processes are created by the python script). It shows why creating large number of processes to achieve concurrency may be a bad idea. A better idea would be to either:  
 * rely on multi-threading itself (which unfortunately utilizes only a single cpu-core)  
-* use asyncio (assumming that the blocking code can be turned into coroutines)  
+* use asyncio (assumming that the blocking code can be turned into coroutines), possibly combined with multiprocessing as shown in [asyncioeval](https://github.com/nbasker/tools/tree/master/asyncioeval)  
 * combine multiprocessing with multi-threading just like fast\_map does  
 
 ![error - image didn't show](https://github.com/michalmonday/fast_map/blob/master/images/io_and_cpu.png?raw=true)
@@ -78,7 +78,7 @@ def io_and_cpu_expensive_blocking_function(x):
 
 #### Strictly CPU expensive task
 
-It can be noticed that using larger number of threads tends to result faster results even in CPU expensive tasks, however I would risk a statement that using such large number of threads (e.g. 1 per each task) for a stricly CPU expensive tasks may bring negligible speed improvement of the fast\_map but may possibly slow down the whole system.  
+It can be noticed that using larger number of threads tends to compute results faster even in CPU expensive tasks, however I would risk a statement that using such large number of threads (e.g. 1 per each task) for a stricly CPU expensive tasks may bring negligible speed improvement of the fast\_map but may possibly slow down the whole system. Because python processes may "fight" with other process over CPU time (that's just my hypothesis).  
 
 ![error - image didn't show](https://github.com/michalmonday/fast_map/blob/master/images/cpu_only.png?raw=true)  
 
