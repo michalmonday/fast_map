@@ -1,11 +1,17 @@
 ## List of contents
+* [Introduction](#introduction)    
 * [Characteristics of fast\_map function](#characteristics-of-fast-map-function)  
 * [Usage](#usage)  
-* [Performance comparison](#performance-comparison) (against multithreading/multiprocessing on their own)   
 * [Installation](#installation)  
+* [Performance comparison](#performance-comparison) (against multithreading/multiprocessing on their own)   
 * [Troubleshooting and issues](#troubleshooting-and-issues)  
 * [Considerations](#considerations)  
 
+## Introduction
+**What is a map?**  
+[map](https://www.w3schools.com/python/ref_func_map.asp) is a python function which allows to repetitively execute the same function witout the need to use loops. It executes each task sequentially, meaning that it doesn't start executing a new task before completing the previous one.  
+
+This library allows to execute multiple tasks in parallel using multiple processor cores, and multiple threads to maximise performance even when function is blocking (e.g. it's delayed by `time.sleep()`).  
 
 ## Characteristics of fast\_map function
 * provides parallelism and concurrency for blocking functions    
@@ -13,7 +19,7 @@
 * return is ordered (accordingly to supplied arguments)  
 * uses the number of processes equal to CPU cores   
 * uses the number of threads equal to the number of supplied tasks (unless threads\_limit argument is provided)  
-* evenly distributes tasks within processes/threads  
+* evenly distributes tasks within processes  
 
 
 ## Usage
@@ -27,13 +33,16 @@ def io_and_cpu_expensive_function(x):
         pass
     return x*x
 
-# It will spawn 8 threads in total.
-# On a 4-core CPU it will spawn 4 processes and 2 threads in each process.
 for i in fast_map(io_and_cpu_expensive_function, range(8), threads_limit=None):
     print(i)
 ```
 
 See [basic\_usage.py](https://github.com/michalmonday/fast_map/tree/master/examples/basic_usage.py) for a more elaborated demonstration.  
+
+## Installation
+
+`python3 -m pip install fast_map`
+
 
 ## Performance comparison
 I compared it against using muliprocessing/multithreading on their own. [test\_fast\_map.py](https://github.com/michalmonday/fast_map/tree/master/test/test_fast_map.py ) is the script I used. It was tested with:  
@@ -43,21 +52,38 @@ Ubuntu 18.04.6
 Intel i5-3320M   
 8GB DDR3 memory
 
+#### IO and CPU expensive task
+Standard map is not shown because it would take minutes (as it executes tasks sequentially).  
 
-#### Comparison when using 10\*\*5 loops within the blocking function.
-"-1" means that ProcessPoolExecutor failed due to "too many files open".  
+"-1" result means that ProcessPoolExecutor failed due to "too many files open" (which on my system happens when around 1000 processes are created by the python script). It shows why creating large number of processes to achieve concurrency may be a bad idea. A better idea would be to either:  
+* rely on multi-threading itself (which unfortunately utilizes only a single cpu-core)  
+* use asyncio (assumming that the blocking code can be turned into coroutines)  
+* combine multiprocessing with multi-threading just like fast\_map does  
 
-![comparison image didn't show](https://github.com/michalmonday/fast_map/blob/master/images/comparison.png?raw=true)  
+![error - image didn't show](https://github.com/michalmonday/fast_map/blob/master/images/io_and_cpu.png?raw=true)
 
+The following blocking function was used to produce the graph above:  
 
-#### Comparison when using 10\*\*6 loops within the blocking function.  
-"-1" means that ProcessPoolExecutor failed due to "too many files open".  
+```python
+def io_and_cpu_expensive_blocking_function(x):
+    time.sleep(1)
+    for i in range(10 ** 6):
+        pass
+    return x
+```
 
-![comparison image didn't show](https://github.com/michalmonday/fast_map/blob/master/images/comparison_2.png?raw=true)  
+#### Strictly CPU expensive task
 
-## Installation
+![error - image didn't show](https://github.com/michalmonday/fast_map/blob/master/images/cpu_only.png?raw=true)  
 
-`python3 -m pip install fast_map`
+The following blocking function was used to produce the graph above:  
+
+```python
+def cpu_expensive_blocking_function(x):
+    for i in range(10 ** 6):
+        pass
+    return x
+```
 
 
 ## Troubleshooting and issues 
