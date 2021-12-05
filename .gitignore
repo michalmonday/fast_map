@@ -1,0 +1,8 @@
+dist
+pyproject.toml
+speed.egg-info/
+unused/
+venv/
+__pycache__/
+build/
+*swp

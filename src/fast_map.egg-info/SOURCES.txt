@@ -1,0 +1,11 @@
+LICENSE
+README.md
+pyproject.toml
+setup.cfg
+src/fast_map/__init__.py
+src/fast_map/fast_map.py
+src/fast_map.egg-info/PKG-INFO
+src/fast_map.egg-info/SOURCES.txt
+src/fast_map.egg-info/dependency_links.txt
+src/fast_map.egg-info/top_level.txt
+test/test_fast_map.py
