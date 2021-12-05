@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: fast-map
-Version: 0.0.1
+Version: 0.0.3
 Summary: Combines multiprocessing and multithreading for fast computation.
 Home-page: https://github.com/michalmonday/fast_map
 Author: Michal Borowski
@@ -50,10 +50,10 @@ for i in fast_map(io_and_cpu_expensive_function, range(8), threads_limit=None):
     print(i)
 ```
 
-See [basic\_usage.py](./examples/basic_usage.py) for a more elaborated demonstration.  
+See [basic\_usage.py](https://github.com/michalmonday/fast_map/tree/master/examples/basic_usage.py) for a more elaborated demonstration.  
 
 ## Performance comparison
-I compared it against using muliprocessing/multithreading on their own. [test\_fast\_map.py](./test/test_fast_map.py ) is the script I used. It was tested with:  
+I compared it against using muliprocessing/multithreading on their own. [test\_fast\_map.py](https://github.com/michalmonday/fast_map/tree/master/test/test_fast_map.py ) is the script I used. It was tested with:  
   
 Python3.7  
 Ubuntu 18.04.6  
@@ -64,13 +64,13 @@ Intel i5-3320M
 #### Comparison when using 10\*\*5 loops within the blocking function.
 "-1" means that ProcessPoolExecutor failed due to "too many files open".  
 
-![comparison image didn't show](./images/comparison.png)  
+![comparison image didn't show](https://github.com/michalmonday/fast_map/tree/master/images/comparison.png)  
 
 
 #### Comparison when using 10\*\*6 loops within the blocking function.  
 "-1" means that ProcessPoolExecutor failed due to "too many files open".  
 
-![comparison image didn't show](./images/comparison_2.png)  
+![comparison image didn't show](https://github.com/michalmonday/fast_map/tree/master/images/comparison_2.png)  
 
 ## Installation
 
