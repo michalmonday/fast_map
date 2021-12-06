@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: fast-map
-Version: 0.0.5
+Version: 0.0.6
 Summary: Combines multiprocessing and multithreading for fast computation.
 Home-page: https://github.com/michalmonday/fast_map
 Author: Michal Borowski
@@ -35,7 +35,7 @@ It provides **fast_map** function and the non-blocking **fast_map_async** equiva
 #### How is this useful?
 Let's take a look at the following function:   
 ```python
-def f():
+def f(x):
     time.sleep(1)
 ```
 
@@ -44,12 +44,32 @@ Using `map(f, range(60))` would take a minute to complete, whereas `fast_map(f, 
 ## Characteristics of fast\_map function
 * provides parallelism and concurrency for blocking functions    
 * returns a [generator](https://stackoverflow.com/a/70233705/4620679) (meaning that individual returned values are returned immediately after being computed, before the whole collection is returned as a whole)  
-* return is ordered (accordingly to supplied arguments), however the execution order of tasks **isn't ordered**   
+* return is ordered (accordingly to supplied arguments), however the execution order of tasks **isn't guaranteed**\* and will most likely differ   
 * evenly distributes tasks within processes  
 * uses the number of threads equal to the number of supplied tasks (unless threads\_limit argument is provided)  
 * uses the number of processes equal to the number of CPU cores unless the number of tasks (or supplied *threads\_limit*) is smaller than it (e.g. to avoid creating 4 processes for a single task)  
 
+#### \*Regarding task execution order
+Tasks are passed to separate processes in their original order (attempting to produce ordered returns as fast as possible. However, tasks are executed in parallel, and there is no mechanism implemented in this library to ensure their start/end point will be ordered/synchronized.   
 
+**What does it mean?**  
+
+The code below will print numbers in the wrong order.  
+```python
+def f(x):
+    print(x)
+for i in fast_map(f, range(60)):
+    pass
+```
+
+The code below will print numbers in the correct order.  
+```python
+def f(x):
+    return x
+for i in fast_map(f, range(60)):
+    print(i)
+```
+    
 ## Usage
 
 #### fast\_map (see [fast\_map\_usage.py](https://github.com/michalmonday/fast_map/tree/master/examples/fast_map_usage.py) for a more elaborated demonstration.  
@@ -64,16 +84,18 @@ def io_and_cpu_expensive_function(x):
         pass
     return x*x
 
-for i in fast_map(io_and_cpu_expensive_function, range(8), threads_limit=None):
+for i in fast_map(io_and_cpu_expensive_function, range(8), threads_limit=100):
     print(i)
 ```
+
+Note that "threads\_limit" has no effect here because only 8 threads are created anyway (1 for each task). It would make a difference if we used "range(101)". In such case we would have to wait additional second before the last (or few remaining) result was yielded/returned.   
 
 #### fast\_map\_async (see [fast\_map\_async\_usage.py](https://github.com/michalmonday/fast_map/tree/master/examples/fast_map_async_usage.py) for a more elaborated demonstration)
 ```python
 from fast_map import fast_map_async
 import time
 
-def task(x):
+def io_and_cpu_expensive_function(x):
     time.sleep(1)
     return x*x
 
@@ -85,7 +107,7 @@ def on_done():
 
 # returns a thread
 t = fast_map_async(
-        task,
+        io_and_cpu_expensive_function,
         range(8), 
         on_result = on_result,
         on_done = on_done,
@@ -94,6 +116,8 @@ t = fast_map_async(
 
 t.join()
 ```
+
+Again, "threads\_limit" has no effect here.  
 
 
 ## Installation
