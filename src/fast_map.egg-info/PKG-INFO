@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: fast-map
-Version: 0.0.4
+Version: 0.0.5
 Summary: Combines multiprocessing and multithreading for fast computation.
 Home-page: https://github.com/michalmonday/fast_map
 Author: Michal Borowski
@@ -28,18 +28,32 @@ License-File: LICENSE
 **What is a map?**  
 [map](https://www.w3schools.com/python/ref_func_map.asp) is a python function which allows to repetitively execute the same function without the need to use loops. It executes each task sequentially, meaning that it doesn't start executing a new task before completing the previous one.  
 
-This library allows to execute multiple tasks in parallel using multiple processor cores, and multiple threads to maximise performance even when function is blocking (e.g. it's delayed by `time.sleep()`).  
+This library allows to execute multiple tasks in parallel using multiple processor cores, and multiple threads to maximise performance when the function is blocking (e.g. it's delayed by `time.sleep()`).  
+
+It provides **fast_map** function and the non-blocking **fast_map_async** equivalent (having the same performance, but allowing to continue execution and receive results in callbacks).  
+
+#### How is this useful?
+Let's take a look at the following function:   
+```python
+def f():
+    time.sleep(1)
+```
+
+Using `map(f, range(60))` would take a minute to complete, whereas `fast_map(f, range(60))` would complete in around 1 second. Note that both of these functions return a [generator](https://stackoverflow.com/a/70233705/4620679).    
 
 ## Characteristics of fast\_map function
 * provides parallelism and concurrency for blocking functions    
 * returns a [generator](https://stackoverflow.com/a/70233705/4620679) (meaning that individual returned values are returned immediately after being computed, before the whole collection is returned as a whole)  
-* return is ordered (accordingly to supplied arguments)  
+* return is ordered (accordingly to supplied arguments), however the execution order of tasks **isn't ordered**   
 * evenly distributes tasks within processes  
 * uses the number of threads equal to the number of supplied tasks (unless threads\_limit argument is provided)  
-* uses the number of processes equal to 2\*CPU cores (which for some reason worked better during my tests than using the exact CPU cores number) unless the number of tasks is smaller than it  
+* uses the number of processes equal to the number of CPU cores unless the number of tasks (or supplied *threads\_limit*) is smaller than it (e.g. to avoid creating 4 processes for a single task)  
 
 
 ## Usage
+
+#### fast\_map (see [fast\_map\_usage.py](https://github.com/michalmonday/fast_map/tree/master/examples/fast_map_usage.py) for a more elaborated demonstration.  
+
 ```python
 from fast_map import fast_map
 import time
@@ -54,7 +68,33 @@ for i in fast_map(io_and_cpu_expensive_function, range(8), threads_limit=None):
     print(i)
 ```
 
-See [basic\_usage.py](https://github.com/michalmonday/fast_map/tree/master/examples/basic_usage.py) for a more elaborated demonstration.  
+#### fast\_map\_async (see [fast\_map\_async\_usage.py](https://github.com/michalmonday/fast_map/tree/master/examples/fast_map_async_usage.py) for a more elaborated demonstration)
+```python
+from fast_map import fast_map_async
+import time
+
+def task(x):
+    time.sleep(1)
+    return x*x
+
+def on_result(result):
+    print(result)
+
+def on_done():
+    print('all done')
+
+# returns a thread
+t = fast_map_async(
+        task,
+        range(8), 
+        on_result = on_result,
+        on_done = on_done,
+        threads_limit = 100
+        )
+
+t.join()
+```
+
 
 ## Installation
 
@@ -66,7 +106,7 @@ I compared it against using muliprocessing/multithreading on their own. [test\_f
   
 Python3.7  
 Ubuntu 18.04.6  
-Intel i5-3320M   
+Intel i5-3320M (4 cores)  
 8GB DDR3 memory
 
 Results show that for IO+CPU expensive tasks fast\_map performs better than multithreading-only and multiprocessing-only approaches. For strictly CPU expensive tasks it performs better than multithreading-only but slightly worse than multiprocessing-only approach.  
@@ -95,7 +135,7 @@ def io_and_cpu_expensive_blocking_function(x):
 
 #### Strictly CPU expensive task
 
-It can be noticed that using larger number of threads tends to result faster results even in CPU expensive tasks, however I would risk a statement that using such large number of threads (e.g. 1 per each task) for a stricly CPU expensive tasks may bring negligible speed improvement of the fast\_map but may possibly slow down the whole system.  
+It can be noticed that using larger number of threads tends to compute results faster even in CPU expensive tasks, however I would risk a statement that using such large number of threads (e.g. 1 per each task) for a stricly CPU expensive tasks may bring negligible speed improvement of the fast\_map but may possibly slow down the whole system. Because python processes may "fight" with other process over CPU time (that's just my hypothesis).  
 
 ![error - image didn't show](https://github.com/michalmonday/fast_map/blob/master/images/cpu_only.png?raw=true)  
 
@@ -114,7 +154,7 @@ Accessing thread-safe objects (created externally, and using locks under the hoo
 
 By default the fast\_map `threads_limit` parameter is `None`, meaning that a separate thread is spawned for **each** of supplied tasks (attempting to provide full concurrency). It is strongly encouraged to set threads\_limit to some reasonable value for 2 reasons:  
 * large number of threads will slow down the CPU-expensive part of the blocking function  
-* fast\_map will result in unhandled exception when too many threads try to be created   
+* fast\_map will result in unhandled exception when too many threads try to be created (on my system it's around few thousands)   
 
 (btw if threads\_limit is higher than the number of supplied tasks, then the number of created threads equals the number of supplied tasks, so threads\_limit doesn't force the number of created threads, it only limits them)  
 

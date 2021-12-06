@@ -1,6 +1,10 @@
 from fast_map import fast_map
 import time
 
+# this function is called from different processes/threads.
+# Meaning that using threading.Lock objects inside it may
+# lead to a deadlock if the default process creating method
+# happens to be "fork" (instead of "spawn" or "forkserver")
 def io_and_cpu_expensive_function(x):
     time.sleep(1)
     for i in range(10 ** 4):
@@ -22,9 +26,9 @@ for i in fast_map(io_and_cpu_expensive_function, range(8), threads_limit=4):
 print('\n')
 
 
-def mult_params(a, b):
+def task_with_multiple_params(a, b):
     return a + ' - ' + b
 
 print('Using function with multiple parameters:')
-for s in fast_map(mult_params, ('apple', 'banana', 'cherry'), ('orange', 'lemon', 'pineapple')):
+for s in fast_map(task_with_multiple_params, ['apple', 'banana', 'cherry'], ['orange', 'lemon', 'pineapple']):
     print(s)

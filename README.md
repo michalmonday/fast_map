@@ -11,18 +11,18 @@
 **What is a map?**  
 [map](https://www.w3schools.com/python/ref_func_map.asp) is a python function which allows to repetitively execute the same function without the need to use loops. It executes each task sequentially, meaning that it doesn't start executing a new task before completing the previous one.  
 
-This library allows to execute multiple tasks in parallel using multiple processor cores, and multiple threads to maximise performance even when function is blocking (e.g. it's delayed by `time.sleep()`).  
+This library allows to execute multiple tasks in parallel using multiple processor cores, and multiple threads to maximise performance when the function is blocking (e.g. it's delayed by `time.sleep()`).  
 
 It provides **fast_map** function and the non-blocking **fast_map_async** equivalent (having the same performance, but allowing to continue execution and receive results in callbacks).  
 
 #### How is this useful?
-Let's take a look at the following simple program:   
+Let's take a look at the following function:   
 ```python
-def f():
+def f(x):
     time.sleep(1)
 ```
 
-Using `map(f, range(60))` would take a minute to complete, whereas `fast_map(f, range(60))` would complete in around 1 second.  
+Using `map(f, range(60))` would take a minute to complete, whereas `fast_map(f, range(60))` would complete in around 1 second. Note that both of these functions return a [generator](https://stackoverflow.com/a/70233705/4620679).    
 
 ## Characteristics of fast\_map function
 * provides parallelism and concurrency for blocking functions    
@@ -66,6 +66,7 @@ def on_result(result):
 def on_done():
     print('all done')
 
+# returns a thread
 t = fast_map_async(
         task,
         range(8), 

@@ -3,7 +3,7 @@ import numpy as np
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 import time
 
-from fast_map import fast_map#, fast_map_simple
+from fast_map import fast_map, fast_map_async
 
 
 def io_and_cpu_expensive_blocking_function(x):
@@ -24,6 +24,12 @@ def cpu_expensive_blocking_function(x):
 
 def get_fast_map(numbers, func, workers=None):
     for i in fast_map(func, numbers, threads_limit=workers): pass
+
+def get_fast_map_async(numbers, func, workers=None):
+    def on_result(result): pass
+    def on_done(): pass
+    t = fast_map_async(func, numbers, on_result=on_result, on_done=on_done, threads_limit=workers)
+    t.join()
 
 def get_ThreadPoolExecutor(numbers, func, workers=None):
     if workers:
@@ -145,8 +151,10 @@ def test_io_cpu():
     #############################
     funcs = {
         'fast_map' : get_fast_map,
+        # 'fast_map_async' : get_fast_map_async,
         'ProcessPoolExecutor' : get_ProcessPoolExecutor,
-        'ThreadPoolExecutor'  : get_ThreadPoolExecutor,
+        'ThreadPoolExecutor'  : get_ThreadPoolExecutor
+        # 'standard map' : get_standard_map,
         #'fast_map_simple': get_fast_map_simple,
         }
 
@@ -184,11 +192,12 @@ def test_io_cpu():
             results, 
             title='IO and CPU expensive task performance comparison (each task has its own worker to achieve full concurrency)', 
             x_label='Number of tasks', 
+            # colors=['darkgreen', 'turquoise', 'orange', 'royalblue'])
             colors=['darkgreen', 'orange', 'royalblue'])
 
 
 
 
 if __name__ == '__main__':
-    test_cpu()
+    # test_cpu()
     test_io_cpu()
