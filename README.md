@@ -27,12 +27,31 @@ Using `map(f, range(60))` would take a minute to complete, whereas `fast_map(f, 
 ## Characteristics of fast\_map function
 * provides parallelism and concurrency for blocking functions    
 * returns a [generator](https://stackoverflow.com/a/70233705/4620679) (meaning that individual returned values are returned immediately after being computed, before the whole collection is returned as a whole)  
-* return is ordered (accordingly to supplied arguments), however the execution order of tasks **isn't ordered**   
+* return is ordered (accordingly to supplied arguments), however the execution order of tasks **isn't guaranteed**\* and will most likely differ   
 * evenly distributes tasks within processes  
 * uses the number of threads equal to the number of supplied tasks (unless threads\_limit argument is provided)  
 * uses the number of processes equal to the number of CPU cores unless the number of tasks (or supplied *threads\_limit*) is smaller than it (e.g. to avoid creating 4 processes for a single task)  
 
+#### \*Regarding task execution order
+Tasks are passed to separate processes in their original order (attempting to produce ordered returns as fast as possible. However, tasks are executed in parallel, and there is no mechanism implemented in this library to ensure their start/end point will be ordered/synchronized.   
+**What does it mean?**  
 
+The code below will print numbers in wrong order:  
+```python
+def f(x):
+    print(x)
+for i in fast_map(f, range(60)):
+    pass
+```
+
+The code below will print numbers in the correct order:  
+```python
+def f(x):
+    return x
+for i in fast_map(f, range(60)):
+    print(i)
+```
+    
 ## Usage
 
 #### fast\_map (see [fast\_map\_usage.py](https://github.com/michalmonday/fast_map/tree/master/examples/fast_map_usage.py) for a more elaborated demonstration.  
