@@ -71,7 +71,7 @@ for i in fast_map(io_and_cpu_expensive_function, range(8), threads_limit=100):
     print(i)
 ```
 
-Note that "threads\_limit" has no effect here because only 8 threads are created anyway (1 for each task).  
+Note that "threads\_limit" has no effect here because only 8 threads are created anyway (1 for each task). It would make a difference if we used "range(101)". In such case we would have to wait additional second before the last (or multiple remaining) results were yielded/returned.   
 
 #### fast\_map\_async (see [fast\_map\_async\_usage.py](https://github.com/michalmonday/fast_map/tree/master/examples/fast_map_async_usage.py) for a more elaborated demonstration)
 ```python
@@ -100,7 +100,7 @@ t = fast_map_async(
 t.join()
 ```
 
-Again, "threads\_limit" has no effect here. It would make a difference if we used "range(101)". In such case we would have to wait additional second before the last (or multiple remaining) results were yielded/returned.   
+Again, "threads\_limit" has no effect here.  
 
 
 ## Installation
