@@ -34,9 +34,10 @@ Using `map(f, range(60))` would take a minute to complete, whereas `fast_map(f, 
 
 #### \*Regarding task execution order
 Tasks are passed to separate processes in their original order (attempting to produce ordered returns as fast as possible. However, tasks are executed in parallel, and there is no mechanism implemented in this library to ensure their start/end point will be ordered/synchronized.   
+
 **What does it mean?**  
 
-The code below will print numbers in wrong order:  
+The code below will print numbers in the wrong order.  
 ```python
 def f(x):
     print(x)
@@ -44,7 +45,7 @@ for i in fast_map(f, range(60)):
     pass
 ```
 
-The code below will print numbers in the correct order:  
+The code below will print numbers in the correct order.  
 ```python
 def f(x):
     return x
@@ -66,9 +67,11 @@ def io_and_cpu_expensive_function(x):
         pass
     return x*x
 
-for i in fast_map(io_and_cpu_expensive_function, range(8), threads_limit=None):
+for i in fast_map(io_and_cpu_expensive_function, range(8), threads_limit=100):
     print(i)
 ```
+
+Note that "threads\_limit" has no effect here because only 8 threads are created anyway (1 for each task).  
 
 #### fast\_map\_async (see [fast\_map\_async\_usage.py](https://github.com/michalmonday/fast_map/tree/master/examples/fast_map_async_usage.py) for a more elaborated demonstration)
 ```python
@@ -96,6 +99,8 @@ t = fast_map_async(
 
 t.join()
 ```
+
+Again, "threads\_limit" has no effect here. It would make a difference if we used "range(101)". In such case we would have to wait additional second before the last (or multiple remaining) results were yielded/returned.   
 
 
 ## Installation
