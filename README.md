@@ -63,7 +63,7 @@ import time
 
 def io_and_cpu_expensive_function(x):
     time.sleep(1)
-    for i in range(10 ** 5):
+    for i in range(10 ** 6):
         pass
     return x*x
 
@@ -80,6 +80,8 @@ import time
 
 def io_and_cpu_expensive_function(x):
     time.sleep(1)
+    for i in range(10 ** 6):
+        pass
     return x*x
 
 def on_result(result):
