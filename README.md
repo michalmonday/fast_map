@@ -56,7 +56,7 @@ for i in fast_map(io_and_cpu_expensive_function, range(8), threads_limit=None):
 from fast_map import fast_map_async
 import time
 
-def task(x):
+def io_and_cpu_expensive_function(x):
     time.sleep(1)
     return x*x
 
@@ -68,7 +68,7 @@ def on_done():
 
 # returns a thread
 t = fast_map_async(
-        task,
+        io_and_cpu_expensive_function,
         range(8), 
         on_result = on_result,
         on_done = on_done,
