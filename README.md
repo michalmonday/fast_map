@@ -13,16 +13,30 @@
 
 This library allows to execute multiple tasks in parallel using multiple processor cores, and multiple threads to maximise performance even when function is blocking (e.g. it's delayed by `time.sleep()`).  
 
+It provides **fast_map** function and the non-blocking **fast_map_async** equivalent (having the same performance, but allowing to continue execution and receive results in callbacks).  
+
+#### How is this useful?
+Let's take a look at the following simple program:   
+```python
+def f():
+    time.sleep(1)
+```
+
+Using `map(f, range(60))` would take a minute to complete, whereas `fast_map(f, range(60))` would complete in around 1 second.  
+
 ## Characteristics of fast\_map function
 * provides parallelism and concurrency for blocking functions    
 * returns a [generator](https://stackoverflow.com/a/70233705/4620679) (meaning that individual returned values are returned immediately after being computed, before the whole collection is returned as a whole)  
-* return is ordered (accordingly to supplied arguments)  
+* return is ordered (accordingly to supplied arguments), however the execution order of tasks **isn't ordered**   
 * evenly distributes tasks within processes  
 * uses the number of threads equal to the number of supplied tasks (unless threads\_limit argument is provided)  
-* uses the number of processes equal to 2\*CPU cores (which for some reason worked better during my tests than using the exact CPU cores number) unless the number of tasks is smaller than it  
+* uses the number of processes equal to the number of CPU cores unless the number of tasks (or supplied *threads\_limit*) is smaller than it (e.g. to avoid creating 4 processes for a single task)  
 
 
 ## Usage
+
+#### fast\_map (see [fast\_map\_usage.py](https://github.com/michalmonday/fast_map/tree/master/examples/fast_map_usage.py) for a more elaborated demonstration.  
+
 ```python
 from fast_map import fast_map
 import time
@@ -37,7 +51,32 @@ for i in fast_map(io_and_cpu_expensive_function, range(8), threads_limit=None):
     print(i)
 ```
 
-See [basic\_usage.py](https://github.com/michalmonday/fast_map/tree/master/examples/basic_usage.py) for a more elaborated demonstration.  
+#### fast\_map\_async (see [fast\_map\_async\_usage.py](https://github.com/michalmonday/fast_map/tree/master/examples/fast_map_async_usage.py) for a more elaborated demonstration)
+```python
+from fast_map import fast_map_async
+import time
+
+def task(x):
+    time.sleep(1)
+    return x*x
+
+def on_result(result):
+    print(result)
+
+def on_done():
+    print('all done')
+
+t = fast_map_async(
+        task,
+        range(8), 
+        on_result = on_result,
+        on_done = on_done,
+        threads_limit = 100
+        )
+
+t.join()
+```
+
 
 ## Installation
 
