@@ -159,6 +159,8 @@ def cpu_expensive_blocking_function(x):
 
 
 ## Troubleshooting and issues 
+Calling fast\_map from different threads or calling fast\_map\_async in a loop may lead to creating too many processes or threads.  
+
 Accessing thread-safe objects (created externally, and using locks under the hood) within the function supplied to fast\_map will probably result in a deadlock.
 
 By default the fast\_map `threads_limit` parameter is `None`, meaning that a separate thread is spawned for **each** of supplied tasks (attempting to provide full concurrency). It is strongly encouraged to set threads\_limit to some reasonable value for 2 reasons:  
