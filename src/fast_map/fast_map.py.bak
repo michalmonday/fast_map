@@ -90,7 +90,7 @@ def fast_map(f, *v, threads_limit=None, forced_procs_count=None):
                 continue
             yield res
             expected_index += 1
-            while ordered_results.get(expected_index, None) is not None:
+            while ordered_results.get(expected_index, None):
                 yield ordered_results.pop(expected_index)
                 expected_index += 1
             if expected_index == tasks_count:
