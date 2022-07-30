@@ -159,6 +159,8 @@ def cpu_expensive_blocking_function(x):
 
 
 ## Troubleshooting and issues 
+It isn't suitable to be used in multi-processing scripts unless you know what you're doing (it was problematic when I tried to use it in such scripts).   
+
 Calling fast\_map from different threads or calling fast\_map\_async in a loop may lead to creating too many processes or threads.  
 
 Accessing thread-safe objects (created externally, and using locks under the hood) within the function supplied to fast\_map will probably result in a deadlock.
