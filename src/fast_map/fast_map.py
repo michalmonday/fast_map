@@ -34,19 +34,16 @@ def calculate_procs_and_threads_per_process(threads_limit, tasks_count):
         cpu, 2 threads will be spawned in each process) '''
     procs_count = mp.cpu_count()
     if tasks_count < procs_count:
-        procs_count = tasks_count
+        return tasks_count, 1
     if threads_limit and threads_limit < procs_count:
-        procs_count
+        return threads_limit, 1
 
-    # chunk to be processed by a single process
-    chunk_size = math.ceil(tasks_count / procs_count)
-    threads_pp = chunk_size # threads per process
+    # threads per process
+    threads_pp = math.ceil(tasks_count / procs_count)
     if threads_limit:
         threads_pp = min(threads_pp, math.ceil(threads_limit/procs_count))
     # print("threads_pp =", threads_pp)
     return procs_count, threads_pp
-
-        
 
 
 def fast_map(f, *v, threads_limit=None, forced_procs_count=None):

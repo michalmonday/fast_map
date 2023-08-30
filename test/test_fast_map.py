@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 import time
+# import ray
+# ray.init()
 
 from fast_map import fast_map, fast_map_async
 
@@ -12,15 +14,26 @@ def io_and_cpu_expensive_blocking_function(x):
         pass
     return x
 
+
 def cpu_expensive_blocking_function(x):
     for i in range(10 ** 6):
         pass
     return x
 
-# def get_fast_map_simple(numbers, workers, func):
-#     gen_obj = fast_map_simple(func, numbers, threads_limit=workers)
-#     for i in gen_obj:
-#         pass
+#@ray.remote
+#def io_and_cpu_expensive_blocking_function_ray(x):
+#    time.sleep(1)
+#    for i in range(10 ** 6):
+#        pass
+#    return x
+
+# @ray.remote
+#def cpu_expensive_blocking_function_ray(x):
+#    for i in range(10 ** 6):
+#        pass
+#    return x
+
+
 
 def get_fast_map(numbers, func, workers=None):
     for i in fast_map(func, numbers, threads_limit=workers): pass
@@ -39,14 +52,17 @@ def get_ThreadPoolExecutor(numbers, func, workers=None):
         with ThreadPoolExecutor() as executor:
             for i in executor.map(func, numbers): pass
 
+# def get_ray(numbers, func, workers=None):
+#     futures = [func.remote(i) for i in numbers]
+#     for i in ray.get(futures): pass
 
 def get_ProcessPoolExecutor(numbers, func, workers=None):
     if workers:
         with ProcessPoolExecutor(workers) as executor:
-            for i in executor.map(func, numbers): pass
+            for i in executor.map(func, numbers, chunksize=50): pass
     else:
         with ProcessPoolExecutor() as executor:
-            for i in executor.map(func, numbers): pass
+            for i in executor.map(func, numbers, chunksize=50): pass
 
 def get_standard_map(numbers, func, **kw):
     for i in map(func, numbers): pass
@@ -117,6 +133,7 @@ def test_cpu():
     #############################
 
     funcs = {
+        # 'ray' : get_ray,
         'ProcessPoolExecutor (default max_workers)' : get_ProcessPoolExecutor,
         'fast_map (1 thread per 1 task)' : partial(get_fast_map, workers=None),
         'fast_map (threads_limit=30)' : partial(get_fast_map, workers=30),
@@ -128,8 +145,8 @@ def test_cpu():
 
     labels = []
 
-    for i in range(100, 701, 300):
-    # for i in range(100, 101):
+    # for i in range(100, 701, 300):
+    for i in range(100, 101):
         labels.append(f'{i}')
         for j, (name, func) in enumerate(funcs.items()):
             start_time = time.time()  
@@ -150,6 +167,7 @@ def test_io_cpu():
     # concurrency test (cpu + io)
     #############################
     funcs = {
+        # 'ray' : get_ray,
         'fast_map' : get_fast_map,
         # 'fast_map_async' : get_fast_map_async,
         'ProcessPoolExecutor' : get_ProcessPoolExecutor,
@@ -179,6 +197,9 @@ def test_io_cpu():
                 duration = -1
             else: 
                 try:
+                    # If func == get_ray:
+                    #     func(numbers, io_and_cpu_expensive_blocking_function_ray, workers)
+                    # Else:
                     func(numbers, io_and_cpu_expensive_blocking_function, workers)
                     duration = time.time() - start_time
                 except Exception as e:
@@ -199,5 +220,5 @@ def test_io_cpu():
 
 
 if __name__ == '__main__':
-    # test_cpu()
+    test_cpu()
     test_io_cpu()

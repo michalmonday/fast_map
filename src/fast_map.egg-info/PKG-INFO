@@ -1,13 +1,11 @@
 Metadata-Version: 2.1
 Name: fast-map
-Version: 0.0.6
+Version: 0.0.8
 Summary: Combines multiprocessing and multithreading for fast computation.
 Home-page: https://github.com/michalmonday/fast_map
 Author: Michal Borowski
 Author-email: michalmonday17@gmail.com
-License: UNKNOWN
 Project-URL: Bug Tracker, https://github.com/michalmonday/fast_map/issues
-Platform: UNKNOWN
 Classifier: Programming Language :: Python :: 3
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Operating System :: OS Independent
@@ -80,7 +78,7 @@ import time
 
 def io_and_cpu_expensive_function(x):
     time.sleep(1)
-    for i in range(10 ** 5):
+    for i in range(10 ** 6):
         pass
     return x*x
 
@@ -97,6 +95,8 @@ import time
 
 def io_and_cpu_expensive_function(x):
     time.sleep(1)
+    for i in range(10 ** 6):
+        pass
     return x*x
 
 def on_result(result):
@@ -174,6 +174,8 @@ def cpu_expensive_blocking_function(x):
 
 
 ## Troubleshooting and issues 
+Calling fast\_map from different threads or calling fast\_map\_async in a loop may lead to creating too many processes or threads.  
+
 Accessing thread-safe objects (created externally, and using locks under the hood) within the function supplied to fast\_map will probably result in a deadlock.
 
 By default the fast\_map `threads_limit` parameter is `None`, meaning that a separate thread is spawned for **each** of supplied tasks (attempting to provide full concurrency). It is strongly encouraged to set threads\_limit to some reasonable value for 2 reasons:  
@@ -195,8 +197,6 @@ Multithreading in Python uses a single core on multi-core processors. Multiproce
 
 #### Why not use asyncio for concurrency instead of threading?  
 I think asyncio is a good choice over multi-threading when we can modify a blocking function into an awaitable coroutine. If we want/must use a blocking function (e.g. we can't modify it into asyncio coroutine because it's from some library we can't modify) and we want to make it concurrent, asyncio provides `loop.run_in_executor` which relies on multi-threading anyway.   
-
-
 
 
 
