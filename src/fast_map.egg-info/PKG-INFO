@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: fast-map
-Version: 0.0.8
+Version: 0.1.0
 Summary: Combines multiprocessing and multithreading for fast computation.
 Home-page: https://github.com/michalmonday/fast_map
 Author: Michal Borowski
@@ -45,10 +45,11 @@ Using `map(f, range(60))` would take a minute to complete, whereas `fast_map(f, 
 * return is ordered (accordingly to supplied arguments), however the execution order of tasks **isn't guaranteed**\* and will most likely differ   
 * evenly distributes tasks within processes  
 * uses the number of threads equal to the number of supplied tasks (unless threads\_limit argument is provided)  
-* uses the number of processes equal to the number of CPU cores unless the number of tasks (or supplied *threads\_limit*) is smaller than it (e.g. to avoid creating 4 processes for a single task)  
+* uses the number of processes equal to the number of CPU cores unless the number of tasks (or supplied `threads_limit`/`procs_limit`) is smaller than it (e.g. to avoid creating multiple processes for a single task)  
+* `threads_limit` and `procs_limit` arguments are optional (setting `threads_limit` is strongly encouraged, `procs_limit` is only useful when want the number of created processes to be less than the number of CPU cores and the number of tasks/threads)
 
 #### \*Regarding task execution order
-Tasks are passed to separate processes in their original order (attempting to produce ordered returns as fast as possible. However, tasks are executed in parallel, and there is no mechanism implemented in this library to ensure their start/end point will be ordered/synchronized.   
+Tasks are passed to separate processes in their original order (attempting to produce ordered returns as fast as possible. However, tasks are executed in parallel, and there is no mechanism implemented in this library to ensure their start/end point will be ordered/synchronized, only their returned values are ordered.   
 
 **What does it mean?**  
 
@@ -82,11 +83,12 @@ def io_and_cpu_expensive_function(x):
         pass
     return x*x
 
-for i in fast_map(io_and_cpu_expensive_function, range(8), threads_limit=100):
+for i in fast_map(io_and_cpu_expensive_function, range(8), threads_limit=100, procs_limit=10):
     print(i)
 ```
 
 Note that "threads\_limit" has no effect here because only 8 threads are created anyway (1 for each task). It would make a difference if we used "range(101)". In such case we would have to wait additional second before the last (or few remaining) result was yielded/returned.   
+The *procs\_limit* only takes effect if it's lower than the number of CPU cores and lower than the number of tasks to execute.
 
 #### fast\_map\_async (see [fast\_map\_async\_usage.py](https://github.com/michalmonday/fast_map/tree/master/examples/fast_map_async_usage.py) for a more elaborated demonstration)
 ```python
@@ -110,8 +112,9 @@ t = fast_map_async(
         io_and_cpu_expensive_function,
         range(8), 
         on_result = on_result,
-        on_done = on_done,
-        threads_limit = 100
+        on_done = on_done
+        threads_limit = 100,
+        procs_limit = 4
         )
 
 t.join()
@@ -174,7 +177,9 @@ def cpu_expensive_blocking_function(x):
 
 
 ## Troubleshooting and issues 
-Calling fast\_map from different threads or calling fast\_map\_async in a loop may lead to creating too many processes or threads.  
+It isn't suitable to be used in multi-processing scripts unless you know what you're doing (it was problematic when I tried to use it in such scripts).   
+
+Calling fast\_map from different threads or calling fast\_map\_async in a loop may lead to creating too many processes or threads (use `threads_limit` and `procs_limit` arguments to avoid issues in such case).  
 
 Accessing thread-safe objects (created externally, and using locks under the hood) within the function supplied to fast\_map will probably result in a deadlock.
 
@@ -183,6 +188,7 @@ By default the fast\_map `threads_limit` parameter is `None`, meaning that a sep
 * fast\_map will result in unhandled exception when too many threads try to be created (on my system it's around few thousands)   
 
 (btw if threads\_limit is higher than the number of supplied tasks, then the number of created threads equals the number of supplied tasks, so threads\_limit doesn't force the number of created threads, it only limits them)  
+
 
 ## Implementation details
 fast\_map uses multiprocessing module and its default process start method (which I believe is `fork` on Unix). It spawns the number of processes equal to the number of CPU cores. For each spawned process it uses a separate task supplying `multiprocessing.Queue` (each has its own for the sake of even task distribution). It uses a singl common results queue for collecting results. It uses `concurrent.futures.ThreadPoolExecutor` to implement multi-threading. It uses a single `threading.Thread` to enqueue all the tasks (this allows to start computation on multiple processes without the need to enqueue all the tasks first).   
