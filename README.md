@@ -97,7 +97,7 @@ t = fast_map_async(
         io_and_cpu_expensive_function,
         range(8), 
         on_result = on_result,
-        on_done = on_done
+        on_done = on_done,
         threads_limit = 100,
         procs_limit = 4
         )
