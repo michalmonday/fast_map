@@ -1,9 +1,18 @@
+import atexit
 import multiprocessing as mp
 from concurrent.futures import ThreadPoolExecutor
 import math
 from functools import partial
 from threading import Thread
 # import psutil
+
+def cleanup_subprocesses(subprocesses):
+    '''Cleanup running subprocesses on exit'''
+    for subprocess in subprocesses:
+        if subprocess.pid is None:
+            continue
+        else:
+            subprocess.terminate()
 
 def process_chunk(proc_id, func, threads_count, task_queue, result_queue):
     '''This is the target function for each spawned process. It receives 
@@ -81,6 +90,10 @@ def fast_map(f, *f_args, threads_limit=None, procs_limit=None):
     result_queue = mp.Queue()
 
     procs = []
+
+    # Clean up subprocesses on exit
+    atexit.register(cleanup_subprocesses, procs)
+
     for i in range(procs_count):
         p = mp.Process(target=process_chunk, args=[
             i, f, threads_pp, task_queues[i], result_queue])
