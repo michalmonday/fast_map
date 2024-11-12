@@ -1,5 +1,4 @@
 dist
-pyproject.toml
 speed.egg-info/
 unused/
 venv/
