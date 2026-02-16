@@ -12,4 +12,5 @@ src/fast_map.egg-info/top_level.txt
 test/test_deadlock.py
 test/test_fast_map.py
 test/test_fast_map_async.py
+test/test_fast_map_with_generators_bug.py
 test/test_functionality.py

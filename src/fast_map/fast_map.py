@@ -4,6 +4,8 @@ from concurrent.futures import ThreadPoolExecutor
 import math
 from functools import partial
 from threading import Thread
+import logging
+import time
 # import psutil
 
 def cleanup_subprocesses(subprocesses):
@@ -41,30 +43,44 @@ def calculate_procs_and_threads_per_process(threads_limit, procs_limit,
     threads_limit = total threads limit (e.g. if equal to 8 then on a 4 core
     cpu, 2 threads will be spawned in each process) 
     '''
-    procs_count = mp.cpu_count()
     # Limit the number of processes
+    procs_count = mp.cpu_count()
     if procs_limit:
         procs_count = min(procs_count, procs_limit)
-    if tasks_count < procs_count:
+
+    if tasks_count and tasks_count < procs_count:
         return tasks_count, 1
+
     if threads_limit and threads_limit < procs_count:
         return threads_limit, 1
+    
+    # if tasks_count can't be derived
+    # because of using generators
+    if tasks_count is None:
+        threads_pp = 4
+        logging.warning(f'no len() available for fast_map arguments, using {threads_pp} threads per process, set "tasks_count_estimate" fast_map arugment to allow better calculation.')
+    else:
+        # Threads per process
+        threads_pp = math.ceil(tasks_count / procs_count)
 
-    # Threads per process
-    threads_pp = math.ceil(tasks_count / procs_count)
     if threads_limit:
         threads_pp = min(threads_pp, math.ceil(threads_limit/procs_count))
     # print("threads_pp =", threads_pp)
     return procs_count, threads_pp
 
-
-def fast_map(f, *f_args, threads_limit=None, procs_limit=None):
+enqueueing_finished = False
+enqueued_items_count = 0
+def fast_map(f, *f_args, threads_limit=None, procs_limit=None, tasks_count_estimate=None):
     ''' This function works like the built-in map() function, but it spawns
     multiple processes and threads to speed up the execution.
     f_args = a collection of arguments for the function "f", using the same
     format as the original map function.
-    threads_limit = total threads limit (e.g. if equal to 8, then on a 4 core
-    cpu, 2 threads will be spawned in each process) '''
+    
+    - threads_limit = total threads limit (e.g. if equal to 8, then on a 4 core
+    cpu, 2 threads will be spawned in each process)
+    - tasks_count_estimate argument should only be used if supplying generators
+       '''
+    global enqueueing_finished, enqueued_items_count
     if threads_limit is not None:
         assert threads_limit > 0, "threads_limit must be > 0"
     if procs_limit is not None:
@@ -73,14 +89,21 @@ def fast_map(f, *f_args, threads_limit=None, procs_limit=None):
     def enqueuer(task_queues, f_args):
         ''' This function evenly enqueues tasks into 
         multiple task queues (one queue per process). '''
+        global enqueueing_finished, enqueued_items_count
+        enqueueing_finished = False
+        enqueued_items_count = 0
         for i, val in enumerate(zip(*f_args)):
             task_queues[i % len(task_queues)].put((i,val))
+            enqueued_items_count += 1
         for q in task_queues:
             q.put((None,None))
+        enqueueing_finished = True
 
-    # "task" is a single execution of the target 
-    # function with specified arguments.
-    tasks_count = len(f_args[0])
+    try:
+        tasks_count = len(f_args[0])
+    except TypeError:
+        # if not provided, 4 threads per process will be used
+        tasks_count = tasks_count_estimate
     procs_count, threads_pp = calculate_procs_and_threads_per_process(
         threads_limit, procs_limit, tasks_count)
 
@@ -120,7 +143,8 @@ def fast_map(f, *f_args, threads_limit=None, procs_limit=None):
             while ordered_results.get(expected_index, None) is not None:
                 yield ordered_results.pop(expected_index)
                 expected_index += 1
-            if expected_index == tasks_count:
+            # if expected_index == tasks_count:
+            if expected_index == enqueued_items_count and enqueueing_finished:
                 return
 
 if __name__ == '__main__':

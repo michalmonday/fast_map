@@ -189,5 +189,15 @@ Multithreading in Python uses a single core on multi-core processors. Multiproce
 #### Why not use asyncio for concurrency instead of threading?  
 I think asyncio is a good choice over multi-threading when we can modify a blocking function into an awaitable coroutine. If we want/must use a blocking function (e.g. we can't modify it into asyncio coroutine because it's from some library we can't modify) and we want to make it concurrent, asyncio provides `loop.run_in_executor` which relies on multi-threading anyway.   
 
+#### Using generators as arguments
+
+Standard `map` function allows supplying generators. This was not possible before version 0.3.0 of `fast_map` (thanks to David Boyce for spotting this and providing a workaround). When using generators, the default number of threads is 4 per process. The only way to change it, is to supply `tasks_count_estimate`, which will allow to estimate optimal number of threads per process.
+
+```py
+my_gen = (x for x in ["12.3", "3.3", "-15.2"])
+for res in fast_map(float, my_gen, tasks_count_estimate=3):
+    print(res)
+```
+
 
 
