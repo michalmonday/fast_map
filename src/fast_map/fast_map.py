@@ -90,8 +90,6 @@ def fast_map(f, *f_args, threads_limit=None, procs_limit=None, tasks_count_estim
         ''' This function evenly enqueues tasks into 
         multiple task queues (one queue per process). '''
         global enqueueing_finished, enqueued_items_count
-        enqueueing_finished = False
-        enqueued_items_count = 0
         for i, val in enumerate(zip(*f_args)):
             task_queues[i % len(task_queues)].put((i,val))
             enqueued_items_count += 1
@@ -123,6 +121,8 @@ def fast_map(f, *f_args, threads_limit=None, procs_limit=None, tasks_count_estim
         procs.append(p)
         p.start()
 
+    enqueueing_finished = False
+    enqueued_items_count = 0
     # Enqueue tasks (destination function arguments "f_args")
     # into multiple task queues.
     Thread(target=enqueuer, daemon=True, args=[task_queues, f_args]).start()

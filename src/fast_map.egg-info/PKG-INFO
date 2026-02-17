@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: fast-map
-Version: 0.3.0
+Version: 0.3.1
 Summary: Combines multiprocessing and multithreading for fast computation.
 Home-page: https://github.com/michalmonday/fast_map
 Author: Michal Borowski
